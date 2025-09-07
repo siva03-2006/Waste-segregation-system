@@ -1,0 +1,74 @@
+Description:
+  It automatically detect and monitor waste types—dry, wet, and metallic—and segregate them into appropriate bins using sensors and microcontrollers. The system enhances smart waste management, reduces human effort, and supports environmental sustainability.
+Coding:
+  #include <Servo.h>
+
+#define IR_SENSOR_PIN A0
+#define MOISTURE_SENSOR_PIN A1
+#define METAL_SENSOR_PIN 2
+
+#define SERVO_PIN 9
+#define BUZZER_PIN 8
+
+Servo servo;
+
+void setup() {
+  pinMode(IR_SENSOR_PIN, INPUT);
+  pinMode(MOISTURE_SENSOR_PIN, INPUT);
+  pinMode(METAL_SENSOR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  servo.attach(SERVO_PIN);
+  servo.write(90); // Neutral position
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  int irValue = analogRead(IR_SENSOR_PIN);
+  int moistureValue = analogRead(MOISTURE_SENSOR_PIN);
+  int metalDetected = digitalRead(METAL_SENSOR_PIN);
+
+  if (irValue < 300) { // Waste detected
+    delay(500); // Allow time for sensors to stabilize
+
+    if (metalDetected == HIGH) {
+      Serial.println("Metal Waste Detected");
+      buzz();
+      openBin(3);
+    } else if (moistureValue > 600) {
+      Serial.println("Wet Waste Detected");
+      buzz();
+      openBin(1);
+    } else {
+      Serial.println("Dry Waste Detected");
+      buzz();
+      openBin(2);
+    }
+
+    delay(2000); // Allow bin to stay open
+    servo.write(90); // Return to neutral
+  }
+
+  delay(100);
+}
+
+void openBin(int bin) {
+  switch (bin) {
+    case 1:
+      servo.write(0); // Wet waste bin
+      break;
+    case 2:
+      servo.write(45); // Dry waste bin
+      break;
+    case 3:
+      servo.write(135); // Metal waste bin
+      break;
+  }
+}
+
+void buzz() {
+  digitalWrite(BUZZER_PIN, HIGH);
+  delay(100);
+  digitalWrite(BUZZER_PIN, LOW);
+}
